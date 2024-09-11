@@ -2,97 +2,108 @@
 #include <vector>
 #include <limits>
 
-// Bellmen_algorithm_for_finding_minimum_distance_among_vertices_in_a_graph_if_negative_cycle_is_not_present_or_vise_versa
-
-// input containing negative cycle    : 5 5 0 1 1 1 -2 2 3 -7 1 2 -5 3 3 1 4
-// input containing no negative cycle : 5 5 0 1 1 1 -2 2 1 -7 3 2 -5 3 3 1 4
-
 using namespace std;
+
+//Bellmen_algorithm_for_finding_minimum_distance_among_vertices_in_a_graph_if_negative_cycle_is_not_present_or_vise_versa
+
+//input containing negative cycle: 5 5 0 1 1 1 -2 2 2 -5 3 3 -6 1 2 1 4
+//input containing no negative cycle: 5 5 0 1 1 1 -2 2 2 -5 3 1 -6 3 2 1 4
 
 struct edge
 {
     int start;
-    int weight;
     int end;
+    int weight;
 };
 
-int no_of_edge = 0;
 int no_of_vertex = 0;
-vector<edge> edge_arr(no_of_edge);
+int no_of_edges = 0;
+vector<edge> edges;
 
-void Bellmen(int source)
+void bellman(int source)
 {
     vector<int> distance(no_of_vertex, numeric_limits<int>::max());
+    vector<int> parent(no_of_vertex, -1);
+
     distance[source] = 0;
-    for (size_t i = 0; i < no_of_vertex - 1; i++)
+
+    for (int i = 0; i < no_of_vertex - 1; i++)
     {
-        for (const auto &edge : edge_arr)
+        for (const auto &p : edges)
         {
-            if (distance[edge.start] != numeric_limits<int>::max() && distance[edge.end] > distance[edge.start] + edge.weight)
+            if (distance[p.start] != numeric_limits<int>::max() && distance[p.end] > distance[p.start] + p.weight)
             {
-                distance[edge.end] = distance[edge.start] + edge.weight;
+                distance[p.end] = distance[p.start] + p.weight;
+                parent[p.end] = p.start;
             }
         }
     }
-    bool cycle = false;
-    for (const auto &edge : edge_arr)
+
+    bool negative_cycle = false;
+    for (const auto &p : edges)
     {
-        if (distance[edge.start] != numeric_limits<int>::max() && distance[edge.end] > distance[edge.start] + edge.weight)
+        if (distance[p.start] != numeric_limits<int>::max() && distance[p.end] > distance[p.start] + p.weight)
         {
-            cycle = true;
+            negative_cycle = true;
+
+            cout << "Negative cycle detected involving edge (" << p.start << ", " << p.end << ")" << endl;
+
+            int cycle_vertex = p.end;
+            vector<int> cycle;
+
+            cycle_vertex = parent[cycle_vertex];
+
+            int start_vertex = cycle_vertex;
+            do
+            {
+                cycle.push_back(cycle_vertex);
+                cycle_vertex = parent[cycle_vertex];
+            } while (cycle_vertex != start_vertex);
+            cycle.push_back(start_vertex);
+
+            cout << "Cycle: ";
+            for (int i = cycle.size() - 1; i >= 0; i--)
+            {
+                cout << cycle[i] << " ";
+            }
+            cout << endl;
             break;
         }
     }
-    if (cycle == true)
+
+    if (!negative_cycle)
     {
-        cout << "Negative cycle found . So minimum distance can't be found" << endl;
-    }
-    else
-    {
-        cout << "No negative cycle found" << endl;
-        for (size_t i = 0; i < no_of_vertex; i++)
+        cout<<"No negative cycle"<<endl;
+
+        for (int i = 0; i < no_of_vertex; i++)
         {
-            cout << "Distance of " << i << " is : " << distance[i] << endl;
+            cout << "Distance of " << i << " : " << distance[i] << endl;
         }
     }
 }
 
-/*
 
-5 5 0 1 1 1 -2 2 3 -7 1 2 -5 3 3 1 4
 
-*/
+
 
 int main()
-
 {
-    cin >> no_of_vertex >> no_of_edge;
-    edge_arr.reserve(no_of_edge);
+    cin >> no_of_vertex >> no_of_edges;
+    edges.resize(no_of_edges);
 
-    // edge_arr.resize(no_of_edge);   resize er sathe cin & reserve er sathe push_back
-
-    // for (size_t i = 0; i < no_of_edge; i++)
-    // {
-    //     cin >> edge_arr[i].start;
-    //     cin >> edge_arr[i].weight;
-    //     cin >> edge_arr[i].end;
-    // }
-
-    for (size_t i = 0; i < no_of_edge; i++)
+    for (int i = 0; i < no_of_edges; i++)
     {
-        int a, b, c;
-        cin >> a >> b >> c;
-        edge_arr.push_back({a, b, c});
+        cin >> edges[i].start >> edges[i].weight >> edges[i].end;
     }
 
-    for (size_t i = 0; i < no_of_edge; i++)
+    cout<<"Printing edges : "<<endl;
+
+    for (int i = 0; i < no_of_edges; i++)
     {
-        cout << edge_arr[i].start << " ";
-        cout << edge_arr[i].weight << " ";
-        cout << edge_arr[i].end << endl;
+        cout << edges[i].start << " " << edges[i].weight << " " << edges[i].end << endl;
     }
 
-    Bellmen(0);
+    bellman(0);
 
     return 0;
 }
