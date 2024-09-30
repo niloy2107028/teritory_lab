@@ -1,91 +1,150 @@
 #include <iostream>
 #include <vector>
-#include <algorithm> // For std::min
+#include <cmath>
+
+const double epsilon = 1e-9;
 
 using namespace std;
 
-vector<vector<int>> cur_arr;
-
-int no_of_vertex;
-
-void floyd_warshall()
+void printing_matrix(vector<vector<double>> matrix)
 {
-
-    for (size_t k = 1; k < no_of_vertex + 1; k++)
+    cout << "printing matrix :" << endl;
+    for (const auto row : matrix)
     {
-        for (size_t i = 1; i < no_of_vertex + 1; i++)
+        for (double element : row)
         {
-            for (size_t j = 1; j < no_of_vertex + 1; j++)
-            {
-        
-                cur_arr[i][j] = min(cur_arr[i][j], cur_arr[i][k] + cur_arr[k][j]);
-            }
-        }
-    }
-}
-
-int main()
-{
-    cin >> no_of_vertex;
-
-    cur_arr.resize(no_of_vertex + 1, vector<int>(no_of_vertex + 1, 100));
-
-
-    for (size_t i = 0; i < no_of_vertex + 1; i++)
-    {
-        for (size_t j = 0; j < no_of_vertex + 1; j++)
-        {
-
-            if (i == 0 || j == 0)
-            {
-                cur_arr[i][j] = i + j - 1;
-                continue;
-            }
-            cin >> cur_arr[i][j];
-        }
-    }
-
-
-    floyd_warshall();
-
-
-    cout << "The shortest path matrix is:" << endl;
-    for (size_t i = 0; i < no_of_vertex + 1; i++)
-    {
-        for (size_t j = 0; j < no_of_vertex + 1; j++)
-        {
-            if(i==0&&j==0){
-                cout<<"* ";
-                continue;
-            }
-            if (cur_arr[i][j] == 100)
-            {
-                cout << "INF "; //INF to represent large distances
-            }
-            else
-            {
-                cout << cur_arr[i][j] << " ";
-            }
+            cout << element << " ";
         }
         cout << endl;
     }
+}
 
-    return 0;
+void printing_inverse_matrix(vector<vector<double>> matrix)
+{
+    cout << "printing matrix :" << endl;
+    for (int i = 0; i < matrix.size(); i++)
+    {
+        for (int j = matrix.size(); j < matrix.size() * 2; j++)
+        {
+            cout << matrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+void gauss_eli(vector<vector<double>> &matrix)
+{
+    int size = matrix.size();
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (abs(matrix[i][i]) < epsilon)
+            {
+                cout << "Error! Near zero pivot element at row " << i << " (element: " << matrix[i][i] << ")." << endl;
+                exit(EXIT_FAILURE);
+            }
+
+            double factor = matrix[j][i] / matrix[i][i];
+
+            for (int k = i; k < size * 2; k++)
+            {
+                matrix[j][k] -= factor * matrix[i][k];
+            }
+        }
+    }
+}
+
+void jordan_eli(vector<vector<double>> &matrix)
+{
+    int size = matrix.size();
+
+    for (int i = size - 1; i > -1; i--)
+    {
+        for (int j = i - 1; j > -1; j--)
+        {
+            if (abs(matrix[i][i]) < epsilon)
+            {
+                cout << "Error! Near zero pivot element at row " << i << " (element: " << matrix[i][i] << ")." << endl;
+                exit(EXIT_FAILURE);
+            }
+
+            double factor = matrix[j][i] / matrix[i][i];
+
+            for (int k = size * 2 - 1; k > -1; k--)
+            {
+                matrix[j][k] -= factor * matrix[i][k];
+            }
+        }
+    }
+}
+
+void row_eche(vector<vector<double>> &matrix)
+{
+    int size = matrix.size();
+    for (int i = 0; i < size; i++)
+    {
+
+        double diag = matrix[i][i];
+        if (abs(diag) > epsilon)
+        {
+            for (int j = 0; j < size * 2; j++)
+            {
+                matrix[i][j] /= diag;
+            }
+        }
+    }
+}
+
+void put_identity(vector<vector<double>> &matrix)
+{
+    for (int i = 0; i < matrix.size(); i++)
+    {
+        for (int j = matrix.size(); j < matrix.size() * 2; j++, i++)
+        {
+            matrix[i][j] = 1;
+        }
+        cout << endl;
+    }
+}
+
+void inverse_matrix(vector<vector<double>> &matrix)
+{
+    put_identity(matrix);
+    gauss_eli(matrix);
+    jordan_eli(matrix);
+    row_eche(matrix);
 }
 
 /*
-4
-0 3 100 7
-8 0 2 100
-5 100 0 1
-2 100 100 0
-*/
 
-/*
-answer:
-0 3 5 6
-5 0 2 3
-3 6 0 1
-2 5 7 0
+3
+1 1 -1
+1 -1 2
+2 1 1
 
 */
+
+int main()
+
+{
+    int no_of_variable = 0;
+    cin >> no_of_variable;
+
+    vector<vector<double>> matrix(no_of_variable, vector<double>(no_of_variable + no_of_variable, 0));
+
+    for (int i = 0; i < no_of_variable; i++)
+    {
+        for (int j = 0; j < no_of_variable; j++)
+        {
+            cin >> matrix[i][j];
+        }
+    }
+
+    inverse_matrix(matrix);
+
+    printing_inverse_matrix(matrix);
+
+    return 0;
+}
