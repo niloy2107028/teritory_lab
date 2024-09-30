@@ -1,146 +1,180 @@
 #include <iostream>
 #include <vector>
-#include <limits>
+#include <cmath>
 
-//Bellmen_algorithm_for_finding_minimum_distance_among_vertices_in_a_graph_if_negative_cycle_is_not_present_or_vise_versa
-
-//input containing negative cycle: 5 5 0 1 1 1 2 -2 2 3 -5 3 1 1 3 4 1
-//input containing no negative cycle: 5 5 0 1 1 1 2 5 2 3 4 3 1 1 3 4 1
+const double epsilon = 1e-9;
 
 using namespace std;
 
-struct edges
+void printing_matrix(vector<vector<double>> matrix)
 {
-    int source;
-    int destination;
-    int weight;
-};
+    cout << "printing matrix :" << endl;
+    for (const auto row : matrix)
+    {
+        for (double element : row)
+        {
+            cout << element << " ";
+        }
+        cout << endl;
+    }
+}
 
-int no_of_edges = 0;
-
-class Graph
+void gauss_eli(vector<vector<double>> &matrix)
 {
-public:
-    vector<vector<pair<int, int>>> graph;
-    vector<edges> edge_arr;
-    int no_of_vertices = 0;
+    int size = matrix.size();
 
-    Graph(int n, int e)
+    for (int i = 0; i < size; i++)
     {
-        no_of_vertices = n;
-        graph.resize(no_of_vertices);
-        edge_arr.reserve(e);
-    }
-
-    void Add_edges(int s, int d, int w)
-    {
-        edge_arr.push_back({s,d,w});
-        graph[s].emplace_back(w, d);
-    }
-    void Display_graph()
-    {
-        cout << endl
-             << "Displaying the graph : " << endl;
-        for (int i = 0; i < graph.size(); i++)
+        for (int j = i + 1; j < size; j++)
         {
-            cout << "Node (" << i << ") : ";
-            for (const auto &p : graph[i])
+            if (abs(matrix[i][i]) < epsilon)
             {
-                cout << "..." << p.first << "...> (" << p.second << ")";
+                cout << "Error! Near zero pivot element at row " << i << " (element: " << matrix[i][i] << ")." << endl;
+                exit(EXIT_FAILURE);
             }
-            cout << endl;
-        }
 
-        cout << endl
-             << "Displaying the edges : " << endl;
-        for (int i = 0; i < edge_arr.size(); i++)
-        {
-            cout<<edge_arr[i].source<<"..."<<edge_arr[i].weight<<"...>"<<edge_arr[i].destination<<endl;
-        }
-        cout<<endl;
-    }
+            double factor = matrix[j][i] / matrix[i][i];
 
-    void Bellman_algorithm(int source)
-    {
-        vector <int> distance(no_of_vertices,numeric_limits<int>::max());
-        distance[source]=0;
-
-        for (int i = 0; i < no_of_vertices - 1; i++){
-
-        for (const auto &edge:edge_arr)
-        {
-            int s=edge.source;
-            int d=edge.destination;
-            int w=edge.weight;
-            if(distance[s]!=numeric_limits<int>::max()&&distance[s]+w<distance[d]){
-                distance[d]=distance[s]+w;
-            }
-        }
-        }
-
-        //negative cycle ase kina
-
-        int negative_cycle=0;
-
-        for (const auto &edge:edge_arr)
-        {
-                        int s=edge.source;
-            int d=edge.destination;
-            int w=edge.weight;
-            if(distance[s]!=numeric_limits<int>::max()&&distance[s]+w<distance[d]){
-                cout<<"Graph has a negative-weight cycle"<<endl;
-                cout<<"So minimum distance can't be found !"<<endl;
-                negative_cycle=1;
-                break;
-            }
-        }
-
-        if(negative_cycle==0){
-            cout<<"Printing the distance as there is no negative cycle "<<endl;
-            for (int i = 0; i < no_of_vertices; i++)
+            for (int k = i; k < size + 1; k++)
             {
-                cout<<"Distance of "<<i<<" is : "<<distance[i]<<endl;
+                matrix[j][k] -= factor * matrix[i][k];
             }
-            
         }
-
-        
-
-        return ;
-        
-        
     }
-};
+}
+
+void jordan_eli(vector<vector<double>> &matrix)
+{
+    int size = matrix.size();
+
+    for (int i = size - 1; i > -1; i--)
+    {
+        for (int j = i - 1; j > -1; j--)
+        {
+            if (abs(matrix[i][i]) < epsilon)
+            {
+                cout << "Error! Near zero pivot element at row " << i << " (element: " << matrix[i][i] << ")." << endl;
+                exit(EXIT_FAILURE);
+            }
+
+            double factor = matrix[j][i] / matrix[i][i];
+
+            for (int k = size; k > -1; k--)
+            {
+                matrix[j][k] -= factor * matrix[i][k];
+            }
+        }
+    }
+}
+
+void row_eche(vector<vector<double>> &matrix)
+{
+    int size = matrix.size();
+    for (int i = 0; i < size; i++)
+    {
+
+        double diag = matrix[i][i];
+        if (abs(diag) > epsilon)
+        {
+            for (int j = 0; j <= size; j++)
+            {
+                matrix[i][j] /= diag;
+            }
+        }
+    }
+}
+
+vector<double> gauss_elimination(vector<vector<double>> &matrix)
+{
+
+    gauss_eli(matrix);
+    row_eche(matrix);
+    
+    int size = matrix.size();
+    vector<double> result(size, 0);
+    for (int i = size - 1; i > -1; i--)
+    {
+        result[i] = matrix[i][size];
+        for (int j = i + 1; j < size; j++)
+        {
+            result[i] -= matrix[i][j] * result[j];
+        }
+    }
+
+    return result;
+}
+
+vector<double> gauss_jordan_elimination(vector<vector<double>> &matrix)
+{
+
+    gauss_eli(matrix);
+    jordan_eli(matrix);
+    row_eche(matrix);
+
+    int size = matrix.size();
+    vector<double> result(size, 0);
+    for (int i = size - 1; i > -1; i--)
+    {
+        result[i] = matrix[i][size];
+    }
+
+    return result;
+}
+
+void print_root(vector<double> result)
+{
+    cout << "Printing roots :" << endl;
+    for (int i = 0; i < result.size(); i++)
+    {
+        cout << "Root " << i + 1 << " : " << result[i] << endl;
+    }
+}
+
+/*
+
+3
+1 1 -1 7
+1 -1 2 3
+2 1 1 9
+
+3
+4 1 -1 7
+2 2 2 3
+3 1 1 9
+
+3
+1 2 3 10
+4 5 6 20
+7 8 9 30
+*/
 
 int main()
 
 {
+    int no_of_variable = 0;
+    cin >> no_of_variable;
 
-    int n;
-    cin >> n;
+    vector<vector<double>> matrix(no_of_variable, vector<double>(no_of_variable + 1, 0));
 
-
-    int no_of_edges;
-    cin >> no_of_edges;
-    Graph g(n,no_of_edges);
-
-    int source;
-    int weight;
-    int destination;
-
-    for (int i = 0; i < no_of_edges; i++)
+    for (int i = 0; i < no_of_variable; i++)
     {
-        cin >> source >> destination >> weight;
-        g.Add_edges(source, destination, weight);
+        for (int j = 0; j < no_of_variable + 1; j++)
+        {
+            cin >> matrix[i][j];
+        }
     }
 
-    g.Display_graph();
+    vector<double> result(no_of_variable, 0);
 
-    g.Bellman_algorithm(0); 
+    result = gauss_elimination(matrix);
 
-    // cout << endl << "well termination" << endl;
+    print_root(result);
+
+    result = gauss_jordan_elimination(matrix);
+
+    print_root(result);
+
+    printing_matrix(matrix);
 
     return 0;
 }
-
-
